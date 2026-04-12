@@ -1,0 +1,41 @@
+{
+	"author" : "tnz3",
+	"registers" : 
+	{
+		"r0" : 31,
+		"r1" : 0,
+		"r2" : 0,
+		"r3" : 31,
+		"r4" : 0,
+		"r5" : 0,
+		"r6" : 0,
+		"r7" : 0
+	},
+	"stats" : 
+	{
+		"add" : 0,
+		"and" : 0,
+		"bn" : 0,
+		"bp" : 0,
+		"bx" : 0,
+		"bz" : 0,
+		"cycles" : 6021,
+		"div" : 0,
+		"exp" : 0,
+		"halt" : 1,
+		"instructions" : 6,
+		"j" : 0,
+		"jalr" : 0,
+		"jr" : 0,
+		"lis" : 0,
+		"liz" : 2,
+		"lui" : 0,
+		"lw" : 1,
+		"mod" : 0,
+		"mul" : 0,
+		"nor" : 0,
+		"put" : 1,
+		"sub" : 0,
+		"sw" : 1
+	}
+}

@@ -1,0 +1,14 @@
+[
+{
+  "directory": "/home/tnz3/Proj1/XSim_tick/build",
+  "command": "/usr/bin/g++ -DHAVE_CONFIG_H -DXSim_EXPORTS -I/usr/include/jsoncpp -I/opt/sst/sst-core/include -I/opt/sst/sst-core/include/sst -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/tnz3/Proj1/XSim_tick/sst/include -g -std=c++23 -Wall -g -fPIC -Wl,-undefined -Wl,dynamic_lookup -fPIC -Wno-deprecated -o CMakeFiles/XSim.dir/sst/src/xsim_core/core.cpp.o -c /home/tnz3/Proj1/XSim_tick/sst/src/xsim_core/core.cpp",
+  "file": "/home/tnz3/Proj1/XSim_tick/sst/src/xsim_core/core.cpp",
+  "output": "CMakeFiles/XSim.dir/sst/src/xsim_core/core.cpp.o"
+},
+{
+  "directory": "/home/tnz3/Proj1/XSim_tick/build",
+  "command": "/usr/bin/g++ -DHAVE_CONFIG_H -DXSim_EXPORTS -I/usr/include/jsoncpp -I/opt/sst/sst-core/include -I/opt/sst/sst-core/include/sst -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/tnz3/Proj1/XSim_tick/sst/include -g -std=c++23 -Wall -g -fPIC -Wl,-undefined -Wl,dynamic_lookup -fPIC -Wno-deprecated -o CMakeFiles/XSim.dir/sst/src/xsim_core/memory_wrapper.cpp.o -c /home/tnz3/Proj1/XSim_tick/sst/src/xsim_core/memory_wrapper.cpp",
+  "file": "/home/tnz3/Proj1/XSim_tick/sst/src/xsim_core/memory_wrapper.cpp",
+  "output": "CMakeFiles/XSim.dir/sst/src/xsim_core/memory_wrapper.cpp.o"
+}
+]
