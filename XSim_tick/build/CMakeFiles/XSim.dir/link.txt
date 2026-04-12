@@ -1,1 +1,0 @@
-/usr/bin/g++ -fPIC -g -std=c++23 -Wall -g -shared -Wl,-soname,libXSim.so -o libXSim.so CMakeFiles/XSim.dir/sst/src/xsim_core/core.cpp.o CMakeFiles/XSim.dir/sst/src/xsim_core/memory_wrapper.cpp.o  /usr/lib/x86_64-linux-gnu/libjsoncpp.so 

@@ -1,7 +1,0 @@
-/home/tnz3/Proj1/XSim_tick/build/CMakeFiles/XSim.dir
-/home/tnz3/Proj1/XSim_tick/build/CMakeFiles/edit_cache.dir
-/home/tnz3/Proj1/XSim_tick/build/CMakeFiles/rebuild_cache.dir
-/home/tnz3/Proj1/XSim_tick/build/CMakeFiles/list_install_components.dir
-/home/tnz3/Proj1/XSim_tick/build/CMakeFiles/install.dir
-/home/tnz3/Proj1/XSim_tick/build/CMakeFiles/install/local.dir
-/home/tnz3/Proj1/XSim_tick/build/CMakeFiles/install/strip.dir
