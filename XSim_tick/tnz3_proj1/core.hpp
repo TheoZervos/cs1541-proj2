@@ -21,6 +21,31 @@ namespace XSim
 namespace Core
 {
 
+enum class functional_unit_type {INTEGER, MULTIPLIER, DIVIDER, LS};
+
+struct rename_table_slot {
+	// ready to be written to or not - false if in use by another
+	bool ready_for_write{true};
+	// which rs is writing to this reg; -1 if not being written to
+	int rs_write{-1};
+};
+
+struct operand {
+	// ready to be read from or not - true if has value & not being written to
+	bool ready_for_read{false};
+	// which rs is writing to this reg; -1 if not being written to
+	int rs_write{-1};
+};
+
+struct reservation_station_slot {
+	// rs slot taken y/n
+	bool busy{false};
+	// curr instruction id from pc
+	int instruction_id{-1};
+	operand op1;
+	operand op2;
+};
+
 class Core: public SST::Component
 {
 	public:
@@ -125,9 +150,28 @@ class Core: public SST::Component
 		int next_issue{0};
 		// completed instruction count - inc @ WR
 		int instruction_completes{0};
-		// cycle cnt
+		// cycle count
 		u_int64_t cycle_count{0};
+		// res stations by type - size parsed from config
+		std::array<rename_table_slot, 8> rename_table;
+		std::vector<reservation_station_slot> integer_rs;
+		std::vector<reservation_station_slot> multiplier_rs;
+		std::vector<reservation_station_slot> divider_rs;
+		std::vector<reservation_station_slot> ls_rs; 
+		// fu free tracking by type
+		std::vector<bool> free_int_fu;
+		std::vector<bool> free_mult_fu;
+		std::vector<bool> free_div_fu;
+		// add ls one?
+		std::vector<bool> free_ls_fu; //may change later - queue
 
+		// completed instruction count by type & fu
+		std::vector<int> integer_fu_completes;
+		std::vector<int> multiplier_fu_completes;
+		std::vector<int> divider_fu_completes;
+		std::vector<int> ls_fu_completes;
+		// initialize config default fu count and res stations
+		int config_int_num{0}, config_int_resnum{0}, config_mult_num{0}, config_mult_resnum{0}, config_div_num{0}, config_div_resnum{0}, config_ls_num{0}, config_ls_resnum{0};		
 
 		/** CPU state **/
 		// The program counter

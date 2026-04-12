@@ -35,6 +35,16 @@ Core::Core(ComponentId_t id, Params& params):
 	config_file.close();
 	clock_frequency = config["clock"].asString();
 
+	//init config FU and RS
+	config_int_num = config["integer.number"].asInt();
+	config_int_resnum = config["integer.resnumber"].asInt();
+	config_mult_num = config["multiplier.number"].asInt();
+	config_mult_resnum = config["multiplier.resnumber"].asInt();
+	config_div_num = config["divider.number"].asInt();
+	config_div_resnum = config["divider.resnumber"].asInt();
+	config_ls_num = config["ls.number"].asInt();
+	config_ls_resnum = config["ls.resnumber"].asInt();
+
 	// set up statistics tracking
 	output_fpath = params.find<std::string>("output", output_fpath);
 	stats_json["author"] = "mip132, tnz3";
@@ -72,7 +82,26 @@ void Core::init(unsigned int phase)
 
 void Core::setup()
 {
-	output->output("Setting up.\n");
+	// output->output("Setting up.\n");
+
+	// rename table initialized
+	// match config rs pool sizes
+    integer_rs.resize(config_int_resnum);
+    multiplier_rs.resize(config_mult_resnum);
+    divider_rs.resize(config_div_resnum);
+    ls_rs.resize(config_ls_resnum);
+
+    //initialize all fus to free
+    free_int_fu.assign(config_int_num, true);
+    free_mult_fu.assign(config_mult_num, true);
+    free_div_fu.assign(config_div_num, true);
+    free_ls_fu.assign(config_ls_num, true);
+
+    //initialize complete instructions to 0
+    integer_fu_completes.assign(config_int_num, 0);
+    multiplier_fu_completes.assign(config_mult_num, 0);
+    divider_fu_completes.assign(config_div_num, 0);
+    ls_fu_completes.assign(config_ls_num, 0);
 
 	// Setting up json
 	stats_json["cycles"] = 0;
@@ -211,7 +240,7 @@ bool Core::tick(Cycle_t cycle)
 	// }
 	// return terminate;
 
-	current_cycle = cycle;
+	cycle_count = cycle;
  
 	// TODO: Handle issue queue - event flow signals(WR>>RO>>I)
 
