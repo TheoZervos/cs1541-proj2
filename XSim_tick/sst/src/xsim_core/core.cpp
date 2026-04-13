@@ -82,7 +82,7 @@ void Core::init(unsigned int phase)
 
 void Core::setup()
 {
-	// output->output("Setting up.\n");
+	output->output("Setting up.\n");
 
 	// rename table initialized
 	// match config rs pool sizes
@@ -103,10 +103,31 @@ void Core::setup()
     divider_fu_completes.assign(config_div_num, 0);
     ls_fu_completes.assign(config_ls_num, 0);
 
-	// Setting up json
+	// Setting up output json
 	stats_json["cycles"] = 0;
+	stats_json["integer"] = Json::arrayValue;
+	stats_json["multiplier"] = Json::arrayValue;
+	stats_json["divider"] = Json::arrayValue;
+	stats_json["ls"] = Json::arrayValue;
 	stats_json["reg reads"] = 0;
 	stats_json["stalls"] = 0;
+
+	// Setting up instruction counting vars and storage
+	inst_count[ADD] = 0;
+	inst_count[SUB] = 0;
+	inst_count[NOR] = 0;
+	inst_count[AND] = 0;
+	inst_count[LIS] = 0;
+	inst_count[LIZ] = 0;
+	inst_count[LUI] = 0;
+	inst_count[PUT] = 0;
+	inst_count[HALT] = 0;
+	inst_count[DIV] = 0;
+	inst_count[EXP] = 0;
+	inst_count[MOD] = 0;
+	inst_count[MUL] = 0;
+	inst_count[LW] = 0;
+	inst_count[SW] = 0;
 
 	std::cout << "========== STARTED PROGRAM ==========" << std::endl;
 }
@@ -114,9 +135,6 @@ void Core::setup()
 
 void Core::finish()
 {
-	// saving final register values to json
-	
-
 	// writing json to file
 	std::ofstream file(output_fpath);
 	Json::StreamWriterBuilder writer;
@@ -177,40 +195,66 @@ void Core::load_latencies(Json::Value &config)
     // integer FU opcodes
     latencies[ADD] = int_lat;
 	names[ADD] = "add";
-    latencies[SUB] = int_lat;
+	opcode_types[ADD] = "integer";
+
+	latencies[SUB] = int_lat;
 	names[SUB] = "sub";
+	opcode_types[SUB] = "integer";
+
     latencies[AND] = int_lat;
 	names[AND] = "and";
+	opcode_types[AND] = "integer";
+
     latencies[NOR] = int_lat;
 	names[NOR] = "nor";
+	opcode_types[NOR] = "integer";
+
     latencies[LIZ] = int_lat; 
 	names[LIZ] = "liz";
+	opcode_types[LIZ] = "integer";
+
     latencies[LIS] = int_lat;
 	names[LIS] = "lis";
+	opcode_types[LIS] = "integer";
+
     latencies[LUI] = int_lat;
 	names[LUI] = "lui";
+	opcode_types[LUI] = "integer";
+
     latencies[PUT] = int_lat;
 	names[PUT] = "put";
+	opcode_types[PUT] = "integer";
+
     latencies[HALT] = int_lat;
 	names[HALT] = "halt";
+	opcode_types[HALT] = "integer";
 
     // divider FU opcodes
     latencies[DIV] = div_lat;
 	names[DIV] = "div";
+	opcode_types[DIV] = "divider";
+
     latencies[EXP] = div_lat;
 	names[EXP] = "exp";
+	opcode_types[EXP] = "divider";
+
     latencies[MOD] = div_lat;
 	names[MOD] = "mod";
+	opcode_types[MOD] = "divider";
 
     // multiplier FU opcodes
     latencies[MUL] = mul_lat;
 	names[MUL] = "mul";
+	opcode_types[MUL] = "multiplier";
 
     // ls FU opcodes
     latencies[LW] = ls_lat;
 	names[LW] = "lw";
-    latencies[SW] = ls_lat;
+	opcode_types[LW] = "ls";
+
+	latencies[SW] = ls_lat;
 	names[SW] = "sw";
+	opcode_types[SW] = "ls";
 }
 
 bool Core::tick(Cycle_t cycle)
@@ -320,7 +364,8 @@ void Core::execute_instruction()
 			registers[rd] = registers[rs] + registers[rt];
 			pc += 2;
 			busy = false;
-			stats_json["stats"]["add"] = stats_json["stats"]["add"].asInt() + 1;
+
+			inst_count[ADD]++;
 			break;
 
 		case SUB:
@@ -329,7 +374,8 @@ void Core::execute_instruction()
 			registers[rd] = registers[rs] - registers[rt];
 			pc += 2;
 			busy = false;
-			stats_json["stats"]["sub"] = stats_json["stats"]["sub"].asInt() + 1;
+
+			inst_count[SUB]++;
 			break;
 
 		case AND:
@@ -338,7 +384,8 @@ void Core::execute_instruction()
 			registers[rd] = registers[rs] & registers[rt];
 			pc += 2;
 			busy = false;
-			stats_json["stats"]["and"] = stats_json["stats"]["and"].asInt() + 1;
+			
+			inst_count[AND]++;=
 			break;
 
 		case NOR:
@@ -347,7 +394,8 @@ void Core::execute_instruction()
 			registers[rd] = ~(registers[rs] | registers[rt]);
 			pc += 2;
 			busy = false;
-			stats_json["stats"]["nor"] = stats_json["stats"]["nor"].asInt() + 1;
+			
+			inst_count[NOR]++;
 			break;
 
 		case DIV:
@@ -356,7 +404,8 @@ void Core::execute_instruction()
 			registers[rd] = registers[rs] / registers[rt];
 			pc += 2;
 			busy = false;
-			stats_json["stats"]["div"] = stats_json["stats"]["div"].asInt() + 1;
+			
+			inst_count[DIV]++;
 			break;
 
 		case MUL:
@@ -365,7 +414,8 @@ void Core::execute_instruction()
 			registers[rd] = low_bits(registers[rs]*registers[rt]);
 			pc += 2;
 			busy = false;
-			stats_json["stats"]["mul"] = stats_json["stats"]["mul"].asInt() + 1;
+
+			inst_count[MUL]++;
 			break;
 
 		case MOD:
@@ -374,7 +424,8 @@ void Core::execute_instruction()
 			registers[rd] = registers[rs] % registers[rt];
 			pc += 2;
 			busy = false;
-			stats_json["stats"]["mod"] = stats_json["stats"]["mod"].asInt() + 1;
+			
+			inst_count[MOD]++;
 			break;
 
 		case EXP:
@@ -389,7 +440,8 @@ void Core::execute_instruction()
 			registers[rd] = result;
 			pc += 2;
 			busy = false;
-			stats_json["stats"]["exp"] = stats_json["stats"]["exp"].asInt() + 1;
+			
+			inst_count[EXP]++;
 			break;
 
 		case LW:
@@ -403,7 +455,8 @@ void Core::execute_instruction()
 				busy = false;
 				waiting_memory = false;
 			});
-			stats_json["stats"]["lw"] = stats_json["stats"]["lw"].asInt() + 1;
+			
+			inst_count[LW]++;
 			break;
 
 		case SW:
@@ -424,7 +477,6 @@ void Core::execute_instruction()
 			get_r_fields(instruction, rd, rs, rt);
 			pc = (registers[rs] & 0xFFFE);
 			busy = false;
-			stats_json["stats"]["jr"] = stats_json["stats"]["jr"].asInt() + 1;
 			break;
 
 		case JALR:
@@ -433,7 +485,6 @@ void Core::execute_instruction()
 			registers[rd] = pc+2;
 			pc = (registers[rs] & 0xFFFE);
 			busy = false;
-			stats_json["stats"]["jalr"] = stats_json["stats"]["jalr"].asInt() + 1;
 			break;
 
 		case HALT:
@@ -442,7 +493,8 @@ void Core::execute_instruction()
 			primaryComponentOKToEndSim();
 			// unregisterExit();
 			busy = false;
-			stats_json["stats"]["halt"] = stats_json["stats"]["halt"].asInt() + 1;
+
+			inst_count[HALT]++;
 			break;
 
 		case PUT:
@@ -451,16 +503,18 @@ void Core::execute_instruction()
 			std::cout << "Register " << (int)rs << " = " << registers[rs] << "(unsigned) = " << (int16_t)registers[rs] << "(signed)" << std::endl;
 			pc+=2;
 			busy = false;
-			stats_json["stats"]["put"] = stats_json["stats"]["put"].asInt() + 1;
+
+			inst_count[PUT]++;
 			break;
-		
+
 		case LIZ:
 			std::cout<<"Executing LIZ instruction"<<std::endl;
 			get_i_fields(instruction, rd, imm8);
 			registers[rd] = imm8;
 			pc += 2;
 			busy = false;
-			stats_json["stats"]["liz"] = stats_json["stats"]["liz"].asInt() + 1;
+
+			inst_count[LIZ]++;
 			break;
 
 		case LIS:
@@ -469,7 +523,8 @@ void Core::execute_instruction()
 			registers[rd] = s_ext(imm8);
 			pc += 2;
 			busy = false;
-			stats_json["stats"]["lis"] = stats_json["stats"]["lis"].asInt() + 1;
+
+			inst_count[LIS]++;
 			break;
 
 		case LUI:
@@ -478,7 +533,8 @@ void Core::execute_instruction()
 			registers[rd] = concat8bit(imm8, (rd & 0xFF));
 			pc += 2;
 			busy = false;
-			stats_json["stats"]["lui"] = stats_json["stats"]["lui"].asInt() + 1;
+
+			inst_count[LUI]++;
 			break;
 
 		case BP:
@@ -486,7 +542,6 @@ void Core::execute_instruction()
 			get_i_fields(instruction, rd, imm8);
 			pc = ((int16_t) registers[rd]) > 0 ? imm8 << 1 : pc + 2;
 			busy = false;
-			stats_json["stats"]["bp"] = stats_json["stats"]["bp"].asInt() + 1;
 			break;
 
 		case BN:
@@ -494,7 +549,6 @@ void Core::execute_instruction()
 			get_i_fields(instruction, rd, imm8);
 			pc = ((int16_t) registers[rd]) < 0 ? imm8 << 1 : pc + 2;
 			busy = false;
-			stats_json["stats"]["bn"] = stats_json["stats"]["bn"].asInt() + 1;
 			break;
 
 		case BX:
@@ -502,7 +556,6 @@ void Core::execute_instruction()
 			get_i_fields(instruction, rd, imm8);
 			pc = registers[rd] != 0 ? imm8 << 1 : pc + 2;
 			busy = false;
-			stats_json["stats"]["bx"] = stats_json["stats"]["bx"].asInt() + 1;
 			break;
 
 		case BZ:
@@ -510,7 +563,6 @@ void Core::execute_instruction()
 			get_i_fields(instruction, rd, imm8);
 			pc = registers[rd] == 0 ? imm8 << 1 : pc + 2;
 			busy = false;
-			stats_json["stats"]["bz"] = stats_json["stats"]["bz"].asInt() + 1;
 			break;
 
 		case J:
@@ -519,7 +571,6 @@ void Core::execute_instruction()
 			imm11 = imm11 << 0x01;
 			pc += 2;
 			busy = false;
-			stats_json["stats"]["j"] = stats_json["stats"]["j"].asInt() + 1;
 			break;
 	}
 	if(opcode == HALT)

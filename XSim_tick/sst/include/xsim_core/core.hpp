@@ -62,31 +62,9 @@ class Core: public SST::Component
 
 		SST_ELI_DOCUMENT_PARAMS(
 			{ "verbose", "(uint) Verbosity for debugging. Increased numbers for increased verbosity.", "0" },
-			// { "clock_frequency", "(string) Sets the clock of the core in Hz", "0"}, //clock freq defined in config file
 			{ "program", "(infile) Path to program to be executed by the simulator", "REQUIRED"},
 			{ "configuration", "(infile) Path to JSON config file", "REQUIRED" }, 
 			{ "output", "(outfile) Path to the file that will store program statistics in JSON format", "statistics.json"},
-			// { "add", "(uint) Latency of the add instruction", "1"} ,
-			// { "sub", "(uint) Latency of the sub instruction", "1"} ,
-			// { "and", "(uint) Latency of the and instruction", "1"} ,
-			// { "nor", "(uint) Latency of the nor instruction", "1"} ,
-			// { "div", "(uint) Latency of the div instruction", "1"} ,
-			// { "mul", "(uint) Latency of the mul instruction", "1"} ,
-			// { "mod", "(uint) Latency of the mod instruction", "1"} ,
-			// { "exp", "(uint) Latency of the exp instruction", "1"} ,
-			// { "lw", "(uint) Latency of the lw instruction", "1"} ,
-			// { "sw", "(uint) Latency of the sw instruction", "1"} ,
-			// { "jr", "(uint) Latency of the jr instruction", "1"} ,
-			// { "jalr", "(uint) Latency of the jalr instruction", "1"} ,
-			// { "halt", "(uint) Latency of the halt instruction", "1"} ,
-			// { "put", "(uint) Latency of the put instruction", "1"} ,
-			// { "liz", "(uint) Latency of the liz instruction", "1"} ,
-			// { "lis", "(uint) Latency of the lis instruction", "1"} ,
-			// { "lui", "(uint) Latency of the lui instruction", "1"} ,
-			// { "bp", "(uint) Latency of the bp instruction", "1"} ,
-			// { "bn", "(uint) Latency of the bn instruction", "1"} ,
-			// { "bx", "(uint) Latency of the bx instruction", "1"} ,
-			// { "bz", "(uint) Latency of the bz instruction", "1"} ,
 		)
 
 		// Statistics for our component
@@ -152,6 +130,14 @@ class Core: public SST::Component
 		int instruction_completes{0};
 		// cycle count
 		u_int64_t cycle_count{0};
+		// reg read count
+		u_int64_t reg_reads{0};
+		// stalls count
+		u_int64_t stalls{0};
+		// The map with opcode types
+		std::map<uint32_t, std::string> opcode_types;
+		// The map with the number of times instruction is called
+		std::map<uint32_t, uint32_t> inst_count;
 		// res stations by type - size parsed from config
 		std::array<rename_table_slot, 8> rename_table;
 		std::vector<reservation_station_slot> integer_rs;
