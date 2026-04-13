@@ -10,11 +10,11 @@ parser.add_argument('--program',
                     action='store',
                     help='The program to run in the simulator')
 
-parser.add_argument('--latencies',
-                    dest="latencies",
+parser.add_argument('--configuration',
+                    dest="configuration",
                     required=True,
                     action='store',
-                    help='The json file with the instruction latencies')
+                    help='The json file with the desired configuration')
 
 parser.add_argument('--output',
                     dest='output',
@@ -27,7 +27,7 @@ args = parser.parse_args()
 
 ## Print info ##
 print("Running simulator using program "+args.program)
-print("Latencies in  "+args.latencies)
+print("Configurations in  "+args.configuration)
 print(f"Output statistics to be stored in {args.output}")
 
 #####################################
