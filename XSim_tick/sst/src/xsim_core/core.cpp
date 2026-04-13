@@ -82,7 +82,7 @@ void Core::init(unsigned int phase)
 
 void Core::setup()
 {
-	// output->output("Setting up.\n");
+	output->output("Setting up.\n");
 
 	// rename table initialized
 	// match config rs pool sizes
@@ -103,8 +103,12 @@ void Core::setup()
     divider_fu_completes.assign(config_div_num, 0);
     ls_fu_completes.assign(config_ls_num, 0);
 
-	// Setting up json
+	// Setting up output json
 	stats_json["cycles"] = 0;
+	stats_json["integer"] = Json::arrayValue;
+	stats_json["multiplier"] = Json::arrayValue;
+	stats_json["divider"] = Json::arrayValue;
+	stats_json["ls"] = Json::arrayValue;
 	stats_json["reg reads"] = 0;
 	stats_json["stalls"] = 0;
 
@@ -114,9 +118,6 @@ void Core::setup()
 
 void Core::finish()
 {
-	// saving final register values to json
-	
-
 	// writing json to file
 	std::ofstream file(output_fpath);
 	Json::StreamWriterBuilder writer;
@@ -177,40 +178,66 @@ void Core::load_latencies(Json::Value &config)
     // integer FU opcodes
     latencies[ADD] = int_lat;
 	names[ADD] = "add";
-    latencies[SUB] = int_lat;
+	opcode_types[ADD] = "integer";
+
+	latencies[SUB] = int_lat;
 	names[SUB] = "sub";
+	opcode_types[SUB] = "integer";
+
     latencies[AND] = int_lat;
 	names[AND] = "and";
+	opcode_types[AND] = "integer";
+
     latencies[NOR] = int_lat;
 	names[NOR] = "nor";
+	opcode_types[NOR] = "integer";
+
     latencies[LIZ] = int_lat; 
 	names[LIZ] = "liz";
+	opcode_types[LIZ] = "integer";
+
     latencies[LIS] = int_lat;
 	names[LIS] = "lis";
+	opcode_types[LIS] = "integer";
+
     latencies[LUI] = int_lat;
 	names[LUI] = "lui";
+	opcode_types[LUI] = "integer";
+
     latencies[PUT] = int_lat;
 	names[PUT] = "put";
+	opcode_types[PUT] = "integer";
+
     latencies[HALT] = int_lat;
 	names[HALT] = "halt";
+	opcode_types[HALT] = "integer";
 
     // divider FU opcodes
     latencies[DIV] = div_lat;
 	names[DIV] = "div";
+	opcode_types[DIV] = "divider";
+
     latencies[EXP] = div_lat;
 	names[EXP] = "exp";
+	opcode_types[EXP] = "divider";
+
     latencies[MOD] = div_lat;
 	names[MOD] = "mod";
+	opcode_types[MOD] = "divider";
 
     // multiplier FU opcodes
     latencies[MUL] = mul_lat;
 	names[MUL] = "mul";
+	opcode_types[MUL] = "multiplier";
 
     // ls FU opcodes
     latencies[LW] = ls_lat;
 	names[LW] = "lw";
-    latencies[SW] = ls_lat;
+	opcode_types[LW] = "ls";
+
+	latencies[SW] = ls_lat;
 	names[SW] = "sw";
+	opcode_types[SW] = "ls";
 }
 
 bool Core::tick(Cycle_t cycle)
