@@ -136,8 +136,8 @@ class Core: public SST::Component
 		u_int64_t stalls{0};
 		// The map with opcode types
 		std::map<uint32_t, std::string> opcode_types;
-		// The map with the count of opcode types
-		std::map<std::string, uint32_t> type_count;
+		// The map with the number of times instruction is called
+		std::map<uint32_t, uint32_t> inst_count;
 		// res stations by type - size parsed from config
 		std::array<rename_table_slot, 8> rename_table;
 		std::vector<reservation_station_slot> integer_rs;
