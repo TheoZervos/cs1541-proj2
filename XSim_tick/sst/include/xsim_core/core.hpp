@@ -120,8 +120,6 @@ class Core: public SST::Component
 		std::vector<uint16_t> program;
 		// The map with instruction latencies
 		std::map<uint32_t, uint32_t> latencies;
-		// The map with opcode types
-		std::map<uint32_t, std::string> opcode_types;
 		// The map with instruction names (for printing)
 		std::map<uint32_t, std::string> names;
 
@@ -132,6 +130,14 @@ class Core: public SST::Component
 		int instruction_completes{0};
 		// cycle count
 		u_int64_t cycle_count{0};
+		// reg read count
+		u_int64_t reg_reads{0};
+		// stalls count
+		u_int64_t stalls{0};
+		// The map with opcode types
+		std::map<uint32_t, std::string> opcode_types;
+		// The map with the count of opcode types
+		std::map<std::string, uint32_t> type_count;
 		// res stations by type - size parsed from config
 		std::array<rename_table_slot, 8> rename_table;
 		std::vector<reservation_station_slot> integer_rs;

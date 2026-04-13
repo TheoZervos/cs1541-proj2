@@ -112,6 +112,12 @@ void Core::setup()
 	stats_json["reg reads"] = 0;
 	stats_json["stalls"] = 0;
 
+	// Setting up instruction type call count
+	type_count["integer"] = Json::Value(Json::objectValue);
+	type_count["multiplier"] = Json::Value(Json::objectValue);
+	type_count["divider"] = Json::Value(Json::objectValue);
+	type_count["ls"] = Json::Value(Json::objectValue);
+
 	std::cout << "========== STARTED PROGRAM ==========" << std::endl;
 }
 
