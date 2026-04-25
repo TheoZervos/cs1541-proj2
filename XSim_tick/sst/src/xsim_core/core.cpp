@@ -91,17 +91,11 @@ void Core::setup()
     divider_rs.resize(config_div_resnum);
     ls_rs.resize(config_ls_resnum);
 
-    //initialize all fus to free
-    free_int_fu.assign(config_int_num, true);
-    free_mult_fu.assign(config_mult_num, true);
-    free_div_fu.assign(config_div_num, true);
-    free_ls_fu.assign(config_ls_num, true);
-
-    //initialize complete instructions to 0
-    integer_fu_completes.assign(config_int_num, 0);
-    multiplier_fu_completes.assign(config_mult_num, 0);
-    divider_fu_completes.assign(config_div_num, 0);
-    ls_fu_completes.assign(config_ls_num, 0);
+	//initialize all functional units to free
+    integer_fu_list.resize(config_int_num);
+	multiplier_fu_list.resize(config_mult_num);
+    divider_fu_list.resize(config_div_num);
+    ls_fu_list.resize(config_ls_num);
 
 	// Setting up output json
 	stats_json["cycles"] = 0;
@@ -282,6 +276,22 @@ void Core::load_latencies(Json::Value &config)
 bool Core::tick(Cycle_t cycle)
 {
 	std::cout<<"tick"<<std::endl;
+
+	// issue stalls inside itself
+	issue();
+
+	// reading operands
+	reservation_station_slot_t next_int_inst = read_integer_operands();
+	reservation_station_slot_t next_div_inst = read_divider_operands();
+	reservation_station_slot_t next_mult_inst = read_multiplier_operands();
+
+	// TODO: getting oldest instruction in reservation station in case of overlapping operands
+
+	// TODO: Execute stage (remember rename table)
+
+	// TODO: Write register stage
+
+	// this flow will likely be completely different
 	if (!busy)
 	{
 		fetch_instruction();
@@ -309,24 +319,201 @@ bool Core::tick(Cycle_t cycle)
  
 	// TODO: Handle issue queue - event flow signals(WR>>RO>>I)
 
+	
+
 	return false;
+}
+
+void Core::issue()
+{
+	std::cout << "Issuing" << std::endl;
+	uint16_t instruction = program[pc/2];
+	uint16_t opcode = instruction >> 11;
+	uint16_t rd, rs, rt, imm8;
+	uint16_t op1, op2;
+
+	// getting operands
+	if(opcode == LUI || opcode == LIS || opcode == LIZ) {
+		get_i_fields(instruction, rd, imm8)
+		op1 = rd;
+		op2 = rd; // irrelevant second operand
+	}
+	else
+	{
+		get_r_fields(instruction, rd, rs, rt);
+		op1 = rs;
+		op2 = rt;
+	}
+
+	// get instruction type
+	stalled = true;
+	switch (opcode_types[opcode])
+	{
+	case "integer":
+		if (!hold_integer) {
+			for (const auto &res : integer_rs)
+			{
+				if (res.taken == false)
+				{
+					res.instruction_id = pc;
+					res.taken = true;
+					res.op1 = op1;
+					res.op2 = op2;
+
+					stalled = false;
+					break;
+				}
+			}
+		}
+		break;
+
+	case "divider":
+		if (!hold_divider) {
+			for (const auto &res : divider_rs)
+			{
+				if (res.taken == false)
+				{
+					res.instruction_id = pc;
+					res.taken = true;
+					res.op1 = op1;
+					res.op2 = op2;
+
+					stalled = false;
+					break;
+				}
+			}
+		}
+		break;
+
+	case "multiplier":
+		if(!hold_multiplier) {
+			for (const auto &res : multiplier_rs)
+			{
+				if (res.taken == false)
+				{
+					res.instruction_id = pc;
+					res.taken = true;
+					res.op1 = op1;
+					res.op2 = op2;
+
+					stalled = false;
+					break;
+				}
+			}
+		}
+		break;
+
+	case "ls":
+		if(!hold_ls) {
+			for (const auto &res : ls_rs)
+			{
+				if (res.taken == false)
+				{
+					res.instruction_id = pc;
+					res.taken = true;
+					res.op1 = op1;
+					res.op2 = op2;
+
+					stalled = false;
+					break;
+				}
+			}
+		}
+		break;
+	}
+
+	// if stalled then pc does not increase until instruction assigned reservation station
+	if (stalled) return;
+
+	// instruction assigned
+	pc += 2
+}
+
+reservation_station_slot_t Core::read_integer_operands()
+{
+	std::cout << "Reading Integer Operands" << std::endl;
+	// assigning functional units for integer operand
+	reservation_station_slot_t next_inst;
+	for (const auto &res : integer_rs)
+	{
+		// checking if there is instruction in reservation station
+		if (res.taken == true) {
+			if(operands[res.op1].ready == true && operands[res.op2].ready == true) {
+				// assigning to new if possible
+				if (next_inst.instruction_id != -1 && res.instruction_id < next_inst.instruction_id) {
+					next_inst = res;
+				}
+			}
+			else
+			{
+				continue;
+			}
+		}
+	}
+
+	// TODO: Check if there is an available FU slot and set hold_integer to true if not
+
+	return next_inst;
+}
+
+reservation_station_slot_t Core::read_divider_operands()
+{
+	std::cout << "Reading Divider Operands" << std::endl;
+	// assigning functional units for integer operand
+	reservation_station_slot_t_t next_inst;
+	for (const auto &res : divider_rs)
+	{
+		// checking if there is instruction in reservation station
+		if (res.taken == true) {
+			if(operands[res.op1].ready == true && operands[res.op2].ready == true) {
+				// assigning to new if possible
+				if (next_inst.instruction_id != -1 && res.instruction_id < next_inst.instruction_id) {
+					next_inst = res;
+				}
+			}
+			else
+			{
+				continue;
+			}
+		}
+	}
+
+	// TODO: Check if there is an available FU slot and set hold_integer to true if not
+
+	return next_inst;
+}
+
+reservation_station_slot_t Core::read_divider_operands()
+{
+	std::cout << "Reading Multiplier Operands" << std::endl;
+	// assigning functional units for integer operand
+	reservation_station_slot_t_t next_inst;
+	for (const auto &res : multiplier_rs)
+	{
+		// checking if there is instruction in reservation station
+		if (res.taken == true) {
+			if(operands[res.op1].ready == true && operands[res.op2].ready == true) {
+				// assigning to new if possible
+				if (next_inst.instruction_id != -1 && res.instruction_id < next_inst.instruction_id) {
+					next_inst = res;
+				}
+			}
+			else
+			{
+				continue;
+			}
+		}
+	}
+
+	// TODO: Check if there is an available FU slot and set hold_integer to true if not
+
+	return next_inst;
 }
 
 void Core::fetch_instruction()
 {
-	// Better be aligned!!
-	uint16_t instruction = program[pc/2];
-	uint16_t opcode = instruction >> 11;
-	std::cout<<"Fetched "<<names[opcode]<<std::endl;
-	try
-	{
-		latency_countdown = latencies.at(opcode)-1;  //This cycle counts as 1
-	}
-	catch(std::out_of_range &e)
-	{
-		std::cerr<<"Unknown instruction: opcode "<<opcode<<std::endl;
-		exit(EXIT_FAILURE);
-	}
+	// assigning integer functional units
+	for()
 
 	// TODO: implement issue addressing -> allocate RS if FU free; stall(add to stall ctr) if not
 }
@@ -492,21 +679,6 @@ void Core::execute_instruction()
 			stats_json["ls"][SW_ID]["instructions"] = stats_json["ls"][SW_ID]["instructions"].asInt() + 1;
 			break;
 
-		case JR:
-			std::cout<<"Executing JR instruction"<<std::endl;
-			get_r_fields(instruction, rd, rs, rt);
-			pc = (registers[rs] & 0xFFFE);
-			busy = false;
-			break;
-
-		case JALR:
-			std::cout<<"Executing JALR instruction"<<std::endl;
-			get_r_fields(instruction, rd, rs, rt);
-			registers[rd] = pc+2;
-			pc = (registers[rs] & 0xFFFE);
-			busy = false;
-			break;
-
 		case HALT:
 			std::cout<<"Executing HALT instruction"<<std::endl;
 			pc+=2;
@@ -556,6 +728,12 @@ void Core::execute_instruction()
 
 			stats_json["integer"][LUI_ID]["instructions"] = stats_json["integer"][LUI_ID]["instructions"].asInt() + 1;
 			break;
+
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		// ~~~~~~~~~~~~ UNEEDED BUT ~~~~~~~~~~~~~
+		// ~~~~~~~~~~~ KEPT TO AVOID ~~~~~~~~~~~~
+		// ~~~~~~~~~ BREAKING PROGRAM ~~~~~~~~~~~
+		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 		case BP:
 			std::cout<<"Executing BP instruction"<<std::endl;
