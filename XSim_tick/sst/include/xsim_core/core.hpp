@@ -10,7 +10,7 @@
 // SST interface for memory
 #include <sst/core/interfaces/stdMem.h>
 // SST statistics
-// #include <sst/core/statapi/stataccumulator.h>
+#include <sst/core/statapi/stataccumulator.h>
 
 #include <xsim_core/memory_wrapper.hpp>
 #include <xsim_core/opcodes.hpp>
@@ -68,16 +68,16 @@ class Core: public SST::Component
 		)
 
 		// Statistics for our component
-		// SST_ELI_DOCUMENT_STATISTICS(
-		// 	{ "instructions", "Number of instructions executed", "", 0 }
-		// )
+		SST_ELI_DOCUMENT_STATISTICS(
+			{ "instructions", "Number of instructions executed", "", 0 }
+		)
 
 		// This is used to connect the memory interface, thus we don't need to implement one!
 		SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::StandardMem"} )
 
 	private:
 		using Super=SST::Component;
-		// template<typename Type> using Statistics=SST::Statistics::Statistic<Type>;
+		template<typename Type> using Statistics=SST::Statistics::Statistic<Type>;
 		using Cycle_t=SST::Cycle_t;
 		using StandardMem=SST::Interfaces::StandardMem;
 		using Output=SST::Output;
@@ -137,7 +137,11 @@ class Core: public SST::Component
 		// The map with opcode types
 		std::map<uint32_t, std::string> opcode_types;
 		// The map with the number of times instruction is called
-		std::map<uint32_t, uint32_t> inst_count;
+		std::map<uint32_t, uint32_t> int_count;
+		std::map<uint32_t, uint32_t> mul_count;
+		std::map<uint32_t, uint32_t> div_count;
+		std::map<uint32_t, uint32_t> ls_count;
+
 		// res stations by type - size parsed from config
 		std::array<rename_table_slot, 8> rename_table;
 		std::vector<reservation_station_slot> integer_rs;
@@ -198,7 +202,7 @@ class Core: public SST::Component
 		void execute_instruction();
 
 		// Statistics definitions
-		// Statistics<uint64_t> *instruction_count;
+		Statistics<uint64_t> *instruction_count;
 
 		// TimeConverter -> memory needs this
 		TimeConverter* tc{nullptr};

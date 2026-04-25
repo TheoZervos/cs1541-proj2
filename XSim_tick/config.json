@@ -1,0 +1,21 @@
+{
+  "integer.number": 2,
+  "integer.resnumber": 4,
+  "integer.latency": 1,
+  "divider.number": 1,
+  "divider.resnumber": 2,
+  "divider.latency": 20,
+  "multiplier.number": 2,
+  "multiplier.resnumber": 4,
+  "multiplier.latency": 10,
+
+  "ls.number": 1,
+  "ls.resnumber": 8,
+  "ls.latency": 3,
+
+  "cache": {
+    "associativity": 1,
+    "size": "4096B"
+  },
+  "clock":"1GHz"
+}
