@@ -285,7 +285,15 @@ bool Core::tick(Cycle_t cycle)
 	reservation_station_slot_t next_div_inst = read_divider_operands();
 	reservation_station_slot_t next_mult_inst = read_multiplier_operands();
 
-	// TODO: getting oldest instruction in reservation station in case of overlapping operands
+	reservation_station_slot_t next_inst = next_int_inst;
+	if(next_inst.instruction_id == -1 || next_inst.instruction_id < next_div_inst.instruction_id) {
+		next_inst = next_div_inst;
+	}
+	if(next_inst.instruction_id == -1 || next_inst.instruction_id < next_mult_inst.instruction_id) {
+		next_inst = next_mult_inst;
+	}
+
+	// TODO: Do not add to execution if final id == -1
 
 	// TODO: Execute stage (remember rename table)
 
