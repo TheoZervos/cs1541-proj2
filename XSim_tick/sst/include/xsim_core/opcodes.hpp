@@ -48,5 +48,3 @@
 
 #define LW_ID   0U
 #define SW_ID   1U
-
-
