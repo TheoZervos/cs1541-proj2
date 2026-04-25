@@ -68,7 +68,7 @@ Core::Core(ComponentId_t id, Params& params):
 	output->verbose(CALL_INFO, 1, 0, "Configuration of memory interface completed.\n");
 
 	// SST statistics
-	// instruction_count = registerStatistic<uint64_t>( "instructions" );
+	instruction_count = registerStatistic<uint64_t>( "instructions" );
 
 	// tell the simulator not to end without us
 	registerAsPrimaryComponent();
@@ -113,21 +113,43 @@ void Core::setup()
 	stats_json["stalls"] = 0;
 
 	// Setting up instruction counting vars and storage
-	inst_count[ADD] = 0;
-	inst_count[SUB] = 0;
-	inst_count[NOR] = 0;
-	inst_count[AND] = 0;
-	inst_count[LIS] = 0;
-	inst_count[LIZ] = 0;
-	inst_count[LUI] = 0;
-	inst_count[PUT] = 0;
-	inst_count[HALT] = 0;
-	inst_count[DIV] = 0;
-	inst_count[EXP] = 0;
-	inst_count[MOD] = 0;
-	inst_count[MUL] = 0;
-	inst_count[LW] = 0;
-	inst_count[SW] = 0;
+	Json::Value nested_obj;
+	nested_obj["id"] = 0;
+	nested_obj["instructions"] = 0;
+
+	stats_json["integer"].append(nested_obj);
+	stats_json["integer"][ADD_ID]["id"] = ADD_ID;
+	stats_json["integer"].append(nested_obj);
+	stats_json["integer"][SUB_ID]["id"] = SUB_ID;
+	stats_json["integer"].append(nested_obj);
+	stats_json["integer"][NOR_ID]["id"] = NOR_ID;
+	stats_json["integer"].append(nested_obj);
+	stats_json["integer"][AND_ID]["id"] = AND_ID;
+	stats_json["integer"].append(nested_obj);
+	stats_json["integer"][LIS_ID]["id"] = LIS_ID;
+	stats_json["integer"].append(nested_obj);
+	stats_json["integer"][LIZ_ID]["id"] = LIZ_ID;
+	stats_json["integer"].append(nested_obj);
+	stats_json["integer"][LUI_ID]["id"] = LUI_ID;
+	stats_json["integer"].append(nested_obj);
+	stats_json["integer"][PUT_ID]["id"] = PUT_ID;
+	stats_json["integer"].append(nested_obj);
+	stats_json["integer"][HALT_ID]["id"] = HALT_ID;
+
+	stats_json["divider"].append(nested_obj);
+	stats_json["divider"][DIV_ID]["id"] = DIV_ID;
+	stats_json["divider"].append(nested_obj);
+	stats_json["divider"][EXP_ID]["id"] = EXP_ID;
+	stats_json["divider"].append(nested_obj);
+	stats_json["divider"][MOD_ID]["id"] = MOD_ID;
+
+	stats_json["multiplier"].append(nested_obj);
+	stats_json["multiplier"][MUL_ID]["id"] = MUL_ID;
+
+	stats_json["ls"].append(nested_obj);
+	stats_json["ls"][LW_ID]["id"] = LW_ID;
+	stats_json["ls"].append(nested_obj);
+	stats_json["ls"][SW_ID]["id"] = SW_ID;
 
 	std::cout << "========== STARTED PROGRAM ==========" << std::endl;
 }
@@ -260,7 +282,6 @@ void Core::load_latencies(Json::Value &config)
 bool Core::tick(Cycle_t cycle)
 {
 	std::cout<<"tick"<<std::endl;
-	stats_json["stats"]["cycles"] = stats_json["stats"]["cycles"].asInt() + 1;
 	if (!busy)
 	{
 		fetch_instruction();
@@ -297,7 +318,6 @@ void Core::fetch_instruction()
 	uint16_t instruction = program[pc/2];
 	uint16_t opcode = instruction >> 11;
 	std::cout<<"Fetched "<<names[opcode]<<std::endl;
-	stats_json["stats"]["instructions"] = stats_json["stats"]["instructions"].asInt() + 1;
 	try
 	{
 		latency_countdown = latencies.at(opcode)-1;  //This cycle counts as 1
@@ -350,7 +370,7 @@ void Core::execute_instruction()
 {
 	// TODO: ? - all we do at execute is wait for latency to hold/complete
 
-	Better be aligned!!
+	// Better be aligned!!
 	uint16_t instruction = program[pc/2];
 	uint16_t opcode = instruction >> 11;
 	uint16_t rd,rs,rt,imm8, result;
@@ -365,7 +385,7 @@ void Core::execute_instruction()
 			pc += 2;
 			busy = false;
 
-			inst_count[ADD]++;
+			stats_json["integer"][ADD_ID]["instructions"] = stats_json["integer"][ADD_ID]["instructions"].asInt() + 1;;
 			break;
 
 		case SUB:
@@ -375,7 +395,7 @@ void Core::execute_instruction()
 			pc += 2;
 			busy = false;
 
-			inst_count[SUB]++;
+			stats_json["integer"][SUB_ID]["instructions"] = stats_json["integer"][SUB_ID]["instructions"].asInt() + 1;;
 			break;
 
 		case AND:
@@ -385,7 +405,7 @@ void Core::execute_instruction()
 			pc += 2;
 			busy = false;
 			
-			inst_count[AND]++;=
+			stats_json["integer"][AND_ID]["instructions"] = stats_json["integer"][AND_ID]["instructions"].asInt() + 1;;
 			break;
 
 		case NOR:
@@ -395,7 +415,7 @@ void Core::execute_instruction()
 			pc += 2;
 			busy = false;
 			
-			inst_count[NOR]++;
+			stats_json["integer"][NOR_ID]["instructions"] = stats_json["integer"][NOR_ID]["instructions"].asInt() + 1;;
 			break;
 
 		case DIV:
@@ -405,7 +425,7 @@ void Core::execute_instruction()
 			pc += 2;
 			busy = false;
 			
-			inst_count[DIV]++;
+			stats_json["divider"][DIV_ID]["instructions"] = stats_json["divider"][DIV_ID]["instructions"].asInt() + 1;;
 			break;
 
 		case MUL:
@@ -415,7 +435,7 @@ void Core::execute_instruction()
 			pc += 2;
 			busy = false;
 
-			inst_count[MUL]++;
+			stats_json["multiplier"][MUL_ID]["instructions"] = stats_json["multiplier"][MUL_ID]["instructions"].asInt() + 1;;
 			break;
 
 		case MOD:
@@ -425,7 +445,7 @@ void Core::execute_instruction()
 			pc += 2;
 			busy = false;
 			
-			inst_count[MOD]++;
+			stats_json["divider"][MOD_ID]["instructions"] = stats_json["divider"][MOD_ID]["instructions"].asInt() + 1;
 			break;
 
 		case EXP:
@@ -441,7 +461,7 @@ void Core::execute_instruction()
 			pc += 2;
 			busy = false;
 			
-			inst_count[EXP]++;
+			stats_json["divider"][EXP_ID]["instructions"] = stats_json["divider"][EXP_ID]["instructions"].asInt() + 1;
 			break;
 
 		case LW:
@@ -456,7 +476,7 @@ void Core::execute_instruction()
 				waiting_memory = false;
 			});
 			
-			inst_count[LW]++;
+			stats_json["ls"][LW_ID]["instructions"] = stats_json["ls"][LW_ID]["instructions"].asInt() + 1;
 			break;
 
 		case SW:
@@ -469,7 +489,7 @@ void Core::execute_instruction()
 				busy = false;
 				waiting_memory = false;
 			});
-			stats_json["stats"]["sw"] = stats_json["stats"]["sw"].asInt() + 1;
+			stats_json["ls"][SW_ID]["instructions"] = stats_json["ls"][SW_ID]["instructions"].asInt() + 1;
 			break;
 
 		case JR:
@@ -494,7 +514,7 @@ void Core::execute_instruction()
 			// unregisterExit();
 			busy = false;
 
-			inst_count[HALT]++;
+			stats_json["integer"][HALT_ID]["instructions"] = stats_json["integer"][HALT_ID]["instructions"].asInt() + 1;
 			break;
 
 		case PUT:
@@ -504,7 +524,7 @@ void Core::execute_instruction()
 			pc+=2;
 			busy = false;
 
-			inst_count[PUT]++;
+			stats_json["integer"][PUT_ID]["instructions"] = stats_json["integer"][PUT_ID]["instructions"].asInt() + 1;
 			break;
 
 		case LIZ:
@@ -514,7 +534,7 @@ void Core::execute_instruction()
 			pc += 2;
 			busy = false;
 
-			inst_count[LIZ]++;
+			stats_json["integer"][LIZ_ID]["instructions"] = stats_json["integer"][LIZ_ID]["instructions"].asInt() + 1;
 			break;
 
 		case LIS:
@@ -524,7 +544,7 @@ void Core::execute_instruction()
 			pc += 2;
 			busy = false;
 
-			inst_count[LIS]++;
+			stats_json["integer"][LIS_ID]["instructions"] = stats_json["integer"][LIS_ID]["instructions"].asInt() + 1;
 			break;
 
 		case LUI:
@@ -534,7 +554,7 @@ void Core::execute_instruction()
 			pc += 2;
 			busy = false;
 
-			inst_count[LUI]++;
+			stats_json["integer"][LUI_ID]["instructions"] = stats_json["integer"][LUI_ID]["instructions"].asInt() + 1;
 			break;
 
 		case BP:

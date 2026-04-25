@@ -34,10 +34,10 @@ print(f"Output statistics to be stored in {args.output}")
 #	Load JSON file with latencies	#
 #####################################
 import json
-with open(args.latencies, 'r') as inp_file:
-  latencies=json.load(inp_file)
+with open(args.configuration, 'r') as inp_file:
+  configuration=json.load(inp_file)
 print("Latencies:")
-print(json.dumps(latencies, indent=2))
+print(json.dumps(configuration, indent=2))
 # Latencies will look like
 # {
 #   "liz": 20,
@@ -53,12 +53,11 @@ import sst
 # Add our core to the simulation!
 core = sst.Component("XSim","XSim.Core")
 core.addParams({
-  "clock_frequency": "3GHz",
+  "configuration": args.configuration,
   "program": args.program,
   "output": args.output,
   "verbose": 0
 })
-core.addParams(latencies)
 # Configure the memory interface in our CPU to use the standard interface
 iface = core.setSubComponent("memory", "memHierarchy.standardInterface")
 #iface.addParams({"debug" : 1, "debug_level" : 10})

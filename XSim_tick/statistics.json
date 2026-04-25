@@ -1,41 +1,78 @@
 {
-	"author" : "tnz3",
-	"registers" : 
-	{
-		"r0" : 31,
-		"r1" : 0,
-		"r2" : 0,
-		"r3" : 31,
-		"r4" : 0,
-		"r5" : 0,
-		"r6" : 0,
-		"r7" : 0
-	},
-	"stats" : 
-	{
-		"add" : 0,
-		"and" : 0,
-		"bn" : 0,
-		"bp" : 0,
-		"bx" : 0,
-		"bz" : 0,
-		"cycles" : 6021,
-		"div" : 0,
-		"exp" : 0,
-		"halt" : 1,
-		"instructions" : 6,
-		"j" : 0,
-		"jalr" : 0,
-		"jr" : 0,
-		"lis" : 0,
-		"liz" : 2,
-		"lui" : 0,
-		"lw" : 1,
-		"mod" : 0,
-		"mul" : 0,
-		"nor" : 0,
-		"put" : 1,
-		"sub" : 0,
-		"sw" : 1
-	}
+	"author" : "mip132, tnz3",
+	"cycles" : 0,
+	"divider" : 
+	[
+		{
+			"id" : 0,
+			"instructions" : 0
+		},
+		{
+			"id" : 1,
+			"instructions" : 0
+		},
+		{
+			"id" : 2,
+			"instructions" : 0
+		}
+	],
+	"integer" : 
+	[
+		{
+			"id" : 0,
+			"instructions" : 0
+		},
+		{
+			"id" : 1,
+			"instructions" : 0
+		},
+		{
+			"id" : 2,
+			"instructions" : 0
+		},
+		{
+			"id" : 3,
+			"instructions" : 0
+		},
+		{
+			"id" : 4,
+			"instructions" : 0
+		},
+		{
+			"id" : 5,
+			"instructions" : 2
+		},
+		{
+			"id" : 6,
+			"instructions" : 0
+		},
+		{
+			"id" : 7,
+			"instructions" : 1
+		},
+		{
+			"id" : 8,
+			"instructions" : 1
+		}
+	],
+	"ls" : 
+	[
+		{
+			"id" : 0,
+			"instructions" : 1
+		},
+		{
+			"id" : 1,
+			"instructions" : 1
+		}
+	],
+	"multiplier" : 
+	[
+		{
+			"id" : 0,
+			"instructions" : 0
+		}
+	],
+	"reg reads" : 0,
+	"stalls" : 0
 }

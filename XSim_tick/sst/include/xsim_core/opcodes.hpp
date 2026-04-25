@@ -28,3 +28,25 @@
 // ix-type instructions
 #define J       24U
 
+
+/// INSTRUCTION IDS
+#define ADD_ID  0U
+#define SUB_ID  1U
+#define NOR_ID  2U
+#define AND_ID  3U
+#define LIS_ID  4U
+#define LIZ_ID  5U
+#define LUI_ID  6U
+#define PUT_ID  7U
+#define HALT_ID  8U
+
+#define DIV_ID  0U
+#define EXP_ID  1U
+#define MOD_ID  2U
+
+#define MUL_ID  0U
+
+#define LW_ID   0U
+#define SW_ID   1U
+
+
