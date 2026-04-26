@@ -342,7 +342,7 @@ void Core::issue()
 
 	// getting operands
 	if(opcode == LUI || opcode == LIS || opcode == LIZ) {
-		get_i_fields(instruction, rd, imm8)
+		get_i_fields(instruction, rd, imm8);
 		op1 = rd;
 		op2 = rd; // irrelevant second operand
 	}

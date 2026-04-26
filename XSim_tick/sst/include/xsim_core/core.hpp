@@ -46,6 +46,20 @@ struct reservation_station_slot_t {
 	uint16_t op2;
 };
 
+struct ls_reservation_station_slot_t { //combine behavior of fu and rs slot --> whenever slot is at head treat it as a fu 
+	// rs slot taken y/n
+	bool taken{false};
+	// curr instruction id from pc
+	int instruction_id{-1};
+	uint16_t op1;
+	uint16_t op2;
+	// load v. store - false = sw, true = lw
+	bool load_op{false};
+	u_int32_t latency{0};
+	// operation in cache/memory
+	bool pending{false};
+};
+
 struct functional_unit {
 	bool busy{false};
 	uint32_t latency{0};
@@ -152,7 +166,7 @@ class Core : public SST::Component
 		std::vector<reservation_station_slot_t> integer_rs;
 		std::vector<reservation_station_slot_t> multiplier_rs;
 		std::vector<reservation_station_slot_t> divider_rs;
-		std::vector<reservation_station_slot_t> ls_rs; 
+		std::vector<ls_reservation_station_slot_t> ls_rs; 
 		// fu free tracking by type
 		std::vector<functional_unit> integer_fu_list;
 		std::vector<functional_unit> multiplier_fu_list;
@@ -214,6 +228,15 @@ class Core : public SST::Component
 		void fetch_instruction();
 		// Execute a new instruction
 		void execute_instruction();
+
+		/** LS Queue Trackers */
+		int ls_head{0};
+		int ls_tail{0};
+		// current # of entries in queue
+		int queue_entry_count{0};
+		// true if operation being sent to mem/DRAM *only allowed for one op in queue at a time 
+		bool ls_queue_pending{false};
+
 
 		// Statistics definitions
 		Statistics<uint64_t> *instruction_count;
