@@ -62,6 +62,18 @@ core.addParams({
 iface = core.setSubComponent("memory", "memHierarchy.standardInterface")
 #iface.addParams({"debug" : 1, "debug_level" : 10})
 
+#L1 cache component: mem interface --> cache --> DRAM
+#cache freq, size, and associativity parsed from json config 
+cache = sst.Component("l1_cache", "memHierarchy.Cache")
+cache.addParams(
+  {
+    "cache_frequency": configuration["clock"], 
+    "cache_size": configuration["cache"]["size"],
+    "associativity": str(configuration["cache"]["associativity"]), #1,2,4,8
+    "access_latency_cycles": "1", #1 clock cycle
+    "cache_line_size": "16", #16 bytes
+    "L1": "true",
+})
 
 # Now we add the memory to the simulation
 # In this case we're using a simple memory controller (the memory frontend)

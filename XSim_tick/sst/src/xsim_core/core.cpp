@@ -300,30 +300,6 @@ bool Core::tick(Cycle_t cycle)
 	// TODO: Write register stage
 
 	// this flow will likely be completely different
-	if (!busy)
-	{
-		fetch_instruction();
-		busy = true;
-	}
-	// Block waiting for memory!
-	if(!waiting_memory)
-	{
-		if(latency_countdown==0)
-		{
-			execute_instruction();
-			if(instruction_count)
-			{
-				instruction_count->addData(1);
-			}
-		}
-		else
-		{
-			latency_countdown--;
-		}
-	}
-	return terminate;
-
-	cycle_count = cycle;
  
 	// TODO: Handle issue queue - event flow signals(WR>>RO>>I)
 
@@ -443,9 +419,6 @@ void Core::issue()
 		stalls++;
 		return;
 	} 
-
-	next_issue++;
-
 	// instruction assigned
 	pc += 2;
 }
