@@ -227,7 +227,7 @@ class Core : public SST::Component
 		// Fetch a new instruction
 		void fetch_instruction();
 		// Execute a new instruction
-		void execute_instruction();
+		void execute_instruction();		
 
 		/** LS Queue Trackers */
 		int ls_head{0};

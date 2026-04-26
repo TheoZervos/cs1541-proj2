@@ -412,29 +412,42 @@ void Core::issue()
 		break;
 
 	case "ls":
-		if(!hold_ls) {
-			for (const auto &res : ls_rs)
-			{
-				if (res.taken == false)
-				{
-					res.instruction_id = pc;
-					res.taken = true;
-					res.op1 = op1;
-					res.op2 = op2;
+		if(queue_entry_count < (int)ls_rs.size()) {
+			ls_reservation_station_slot_t &ls_tail_slot = ls_rs[ls_tail];
+			
+			// intialize new operation parameters
+			ls_tail_slot.taken = true;
+			ls_tail_slot.instruction_id = pc;
+			ls_tail_slot.load_op = opcode == LW ? true : false;
 
-					stalled = false;
-					break;
-				}
+			if(opcode == LW){ //lw uses one operand
+				ls_tail_slot.op1 = rs;
+				ls_tail_slot.op2 = 0;
+			} else{
+				ls_tail_slot.op1 = rt;
+				ls_tail_slot.op2 = rs;
 			}
+
+			ls_tail_slot.latency = latencies[opcode];
+			
+			ls_tail = (ls_tail + 1) % ls_rs.size();
+			queue_entry_count++;
+			stalled = false;
+			
 		}
 		break;
 	}
 
 	// if stalled then pc does not increase until instruction assigned reservation station
-	if (stalled) return;
+	if (stalled){
+		stalls++;
+		return;
+	} 
+
+	next_issue++;
 
 	// instruction assigned
-	pc += 2
+	pc += 2;
 }
 
 reservation_station_slot_t Core::read_integer_operands()
@@ -468,7 +481,7 @@ reservation_station_slot_t Core::read_divider_operands()
 {
 	std::cout << "Reading Divider Operands" << std::endl;
 	// assigning functional units for integer operand
-	reservation_station_slot_t_t next_inst;
+	reservation_station_slot_t next_inst;
 	for (const auto &res : divider_rs)
 	{
 		// checking if there is instruction in reservation station
@@ -491,11 +504,11 @@ reservation_station_slot_t Core::read_divider_operands()
 	return next_inst;
 }
 
-reservation_station_slot_t Core::read_divider_operands()
+reservation_station_slot_t Core::read_multiplier_operands()
 {
 	std::cout << "Reading Multiplier Operands" << std::endl;
 	// assigning functional units for integer operand
-	reservation_station_slot_t_t next_inst;
+	reservation_station_slot_t next_inst;
 	for (const auto &res : multiplier_rs)
 	{
 		// checking if there is instruction in reservation station
