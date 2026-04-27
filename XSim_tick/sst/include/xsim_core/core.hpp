@@ -58,6 +58,7 @@ struct ls_reservation_station_slot_t { //combine behavior of fu and rs slot --> 
 	u_int32_t latency{0};
 	// operation in cache/memory
 	bool pending{false};
+	uint16_t d_register{0}; //rd for lw, uninitialized for sw
 };
 
 struct functional_unit {
@@ -234,8 +235,10 @@ class Core : public SST::Component
 		int ls_tail{0};
 		// current # of entries in queue
 		int queue_entry_count{0};
-		// true if operation being sent to mem/DRAM *only allowed for one op in queue at a time 
+		// true if operation being sent to mem/DRAM - only allowed for one op in queue at a time 
 		bool ls_queue_pending{false};
+		// ls queue handler
+		void ls_queue();
 
 
 		// Statistics definitions

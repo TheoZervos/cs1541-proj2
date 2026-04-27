@@ -293,6 +293,8 @@ bool Core::tick(Cycle_t cycle)
 		next_inst = next_mult_inst;
 	}
 
+	ls_queue();
+
 	// TODO: Do not add to execution if final id == -1
 
 	// TODO: Execute stage (remember rename table)
@@ -406,6 +408,14 @@ void Core::issue()
 
 			ls_tail_slot.latency = latencies[opcode];
 			
+			int temp_tail = ls_tail;
+
+			if(opcode == LW) {
+				ls_tail_slot.d_register = rd;
+				rename_table[rd].ready_for_write = false;
+				rename_table[rd].rs_write = temp_tail;
+			}
+
 			ls_tail = (ls_tail + 1) % ls_rs.size();
 			queue_entry_count++;
 			stalled = false;
@@ -420,6 +430,7 @@ void Core::issue()
 		return;
 	} 
 	// instruction assigned
+	next_issue++;
 	pc += 2;
 }
 
@@ -510,6 +521,92 @@ void Core::fetch_instruction()
 	for()
 
 	// TODO: implement issue addressing -> allocate RS if FU free; stall(add to stall ctr) if not
+}
+
+void Core::ls_queue()
+{
+	// nothing in queue or waiting on cache - do nothing
+	if(queue_entry_count == 0 || ls_queue_pending) return;
+
+	// if queue slot empty don't carry out queue ops - safety check
+	ls_reservation_station_slot_t &ls_head_slot = ls_rs[ls_head];
+	if(!ls_head_slot.taken) return;
+
+	// check if operands ready - if either isn't, wait & exit fn
+	bool head_op1_ready = operands[head.op1].ready;
+	bool head_op2_ready;
+	if (ls_head_slot.load_op){
+		head_op2_ready =  operands[ls_head_slot.op2].ready;
+	}
+	if(!head_op1_ready || !head_op2_ready) return;
+	if(ls_head_slot.latency > 0){
+		ls_head_slot.latency--;
+		return;
+	}
+
+	// send operation to cache @ latency completion
+	ls_queue_pending = true;
+	ls_head_slot.pending = true;
+	
+	// calculate effective address for lw and sw - mem acesses rs reg
+	u_int16_t effective_address;
+	if(ls_head_slot.load_op){
+		effective_address = registers[ls_head_slot.op1];
+	}
+	else{
+		effective_address = registers[ls_head_slot.op2];
+	}
+
+	if(ls_head_slot.load_op){ // LW
+		// call mem read & update reg file data
+		memory_wrapper -> read(effective_address, [this, ls_head_slot, ls_head_slot.d_register](u_int16_t addr, u_int16_t data)){
+			registers[ls_head_slot.d_register] = data;
+		}
+		
+		// cdb broadcast
+		operands[ls_head_slot.d_register].ready = true;
+		operands[ls_head_slot.d_register].rs_write = -1;
+
+		// update rename table
+		if(rename_table[ls_head_slot.d_register].rs_write == ls_head_slot.d_register){
+			rename_table[ls_head_slot.d_register].ready_for_write = true;
+			rename_table[ls_head_slot.d_register].rs_write = -1;
+		}
+
+		// free rs slot and move head in queue
+		ls_rs[ls_head_slot.d_register].taken = false;
+		ls_rs[ls_head_slot.d_register].pending = false;
+		ls_head = (ls_head + 1) % ls_rs.size();
+		queue_entry_count--;
+		ls_queue_pending = false;
+		instruction_completes++;
+
+		// update stats
+		stats_json["ls"][0]["instructions"] = stats_json["ls"][0]["instructions"].asInt() + 1;
+
+		// add check for end of program?
+		// ...
+	} else{ // SW
+		// call mem write
+		memory_wrapper -> write(effective_address, registers[ls_head_slot.op1], [this](u_int16_t addr)
+		{
+		// nothing to update in reg file for sw - don't need cdb broadcast or rename table update
+		
+		// free rs slot and move head in queue
+		ls_rs[ls_head_slot.d_register].taken = false;
+		ls_rs[ls_head_slot.d_register].pending = false;
+		ls_head = (ls_head + 1) % ls_rs.size();
+		queue_entry_count--;
+		ls_queue_pending = false;
+		instruction_completes++;
+		
+		// update stats
+		stats_json["ls"][1]["instructions"] = stats_json["ls"][1]["instructions"].asInt() + 1;
+		
+		// add check for end of program?
+		// ...
+		});
+	}		
 }
 
 void Core::get_r_fields(uint16_t &inst, uint16_t &rd, uint16_t &rs, uint16_t &rt)
