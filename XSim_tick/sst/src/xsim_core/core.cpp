@@ -284,6 +284,7 @@ bool Core::tick(Cycle_t cycle)
 		primaryComponentOKToEndSim();
 		return true;
 	}
+	ls_queue();
 
 	return false;
 }
@@ -341,11 +342,19 @@ void Core::issue()
 			target_res = find_free_rs(multiplier_rs, rs_index);
 		} else if (opcode_types[opcode] == "ls") {
 			std::cout << "Instruction is Load/Store" << std::endl;
-			target_res = find_free_rs(ls_rs, rs_index);
+			if (queue_entry_count >= (int)ls_rs.size()) {
+				stalled = true;
+				std::cout << "Load/Store Queue Full - Stalling" << std::endl;
+				return;
+			}
+			rs_index = ls_tail;
+			target_res = &ls_rs[rs_index];
+
+			cache_issue(opcode, rs, rt, rd, rs_index);
 		}
 
 		if (target_res == nullptr) {
-			std::cout << "Stalling" << std::endl;
+			std::cout << "Stalling - No Target Reservation Station" << std::endl;
 			stalled = true;
 			return;
 		}
@@ -388,6 +397,65 @@ void Core::issue()
 
 	std::cout << "Moving to Next Instruction" << std::endl;
 	pc += 1;
+}
+
+void Core::cache_issue(uint16_t opcode, uint16_t rs, uint16_t rt, uint16_t rd, int slot_index)
+{
+    res_slot_t &ls_slot = ls_rs[slot_index];
+
+    ls_slot.taken = true;
+    ls_slot.instruction_id = pc;
+    ls_slot.load_op = (opcode == LW);
+    ls_slot.latency = ls_lat;
+    ls_slot.pending = false;
+    
+    // Store register indices for later use in the FIFO queue
+    ls_slot.op1 = rs; 
+    ls_slot.op2 = rt;
+
+    uint16_t imm8;
+    uint16_t unused_rd;
+    get_i_fields(program[pc], unused_rd, imm8);
+    ls_slot.immediate = s_ext(imm8); 
+
+    if (ls_slot.load_op) {
+        ls_slot.dest = rd;
+        // Logic for RS dependency tracking
+        if (operands[rs].ready) {
+            ls_slot.op1_ready = true;
+            ls_slot.op1_tag = -1;
+            stats_json["reg_reads"] = stats_json["reg_reads"].asUInt() + 1;
+        } else {
+            ls_slot.op1_ready = false;
+            ls_slot.op1_tag = operands[rs].tag;
+            ls_slot.op1_type = operands[rs].type;
+        }
+        ls_slot.op2_ready = true; // LW doesn't wait for op2
+    } else {
+        // SW Logic: Base Address (rs)
+        if (operands[rs].ready) {
+            ls_slot.op1_ready = true;
+            ls_slot.op1_tag = -1;
+            stats_json["reg_reads"] = stats_json["reg_reads"].asUInt() + 1;
+        } else {
+            ls_slot.op1_ready = false;
+            ls_slot.op1_tag = operands[rs].tag;
+            ls_slot.op1_type = operands[rs].type;
+        }
+        // SW Logic: Data to store (rt)
+        if (operands[rt].ready) {
+            ls_slot.op2_ready = true;
+            ls_slot.op2_tag = -1;
+            stats_json["reg_reads"] = stats_json["reg_reads"].asUInt() + 1;
+        } else {
+            ls_slot.op2_ready = false;
+            ls_slot.op2_tag = operands[rt].tag;
+            ls_slot.op2_type = operands[rt].type;
+        }
+    }
+
+    ls_tail = (ls_tail + 1) % ls_rs.size();
+    queue_entry_count++;
 }
 
 bool Core::rs_empty()
@@ -748,6 +816,66 @@ void Core::assign_ls_fu(res_slot_t &res)
 			break;
 		}
 	}
+}
+
+void Core::ls_queue()
+{
+    if (queue_entry_count == 0 || ls_queue_pending) return;
+
+    res_slot_t &ls_head_slot = ls_rs[ls_head];
+    if (!ls_head_slot.taken) return;
+
+    // Wait until both register operands (Base Addr and/or Data) are ready
+    if (!ls_head_slot.op1_ready || !ls_head_slot.op2_ready) return;
+
+    if (ls_head_slot.latency > 0) {
+        ls_head_slot.latency--;
+        return;
+    }
+
+    ls_queue_pending = true;
+    ls_head_slot.pending = true;
+    
+    // Use the register indices we saved during issue
+    uint16_t base_address_reg = ls_head_slot.op1;
+    uint32_t effective_address = registers[base_address_reg] + ls_head_slot.immediate;
+
+    if (ls_head_slot.load_op) { 
+        memory_wrapper->read(effective_address, [this, effective_address](uint16_t addr, uint16_t data) {
+            int head_idx = ls_head;
+            res_slot_t &slot = ls_rs[head_idx];
+
+            registers[slot.dest] = data;
+            cdb_broadcast(head_idx, "ls");
+
+            update_instruction_count(slot.instruction_id);
+            stats_json["ls"][0]["instructions"] = stats_json["ls"][0]["instructions"].asInt() + 1;
+
+            slot.taken = false;
+            slot.pending = false;
+        	ls_head = (ls_head + 1) % ls_rs.size();
+            queue_entry_count--;
+            ls_queue_pending = false;
+        });
+    } 
+    else { 
+        uint16_t data_reg = ls_head_slot.op2; // For sw, rt is stored in op2
+        uint16_t store_data = registers[data_reg];
+        
+        memory_wrapper->write(effective_address, store_data, [this](uint16_t addr) {
+            int head_idx = ls_head;
+            res_slot_t &slot = ls_rs[head_idx];
+
+            update_instruction_count(slot.instruction_id);
+            stats_json["ls"][1]["instructions"] = stats_json["ls"][1]["instructions"].asInt() + 1;
+
+            slot.taken = false;
+            slot.pending = false;
+            ls_head = (ls_head + 1) % ls_rs.size();
+            queue_entry_count--;
+            ls_queue_pending = false;
+        });
+    }
 }
 
 void Core::get_r_fields(uint16_t &inst, uint16_t &rd, uint16_t &rs, uint16_t &rt)
