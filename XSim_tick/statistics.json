@@ -1,11 +1,11 @@
 {
 	"author" : "mip132, tnz3",
-	"cycles" : 0,
+	"cycles" : 48,
 	"divider" : 
 	[
 		{
 			"id" : 0,
-			"instructions" : 0
+			"instructions" : 2
 		},
 		{
 			"id" : 1,
@@ -20,7 +20,7 @@
 	[
 		{
 			"id" : 0,
-			"instructions" : 0
+			"instructions" : 4
 		},
 		{
 			"id" : 1,
@@ -40,7 +40,7 @@
 		},
 		{
 			"id" : 5,
-			"instructions" : 2
+			"instructions" : 0
 		},
 		{
 			"id" : 6,
@@ -48,22 +48,22 @@
 		},
 		{
 			"id" : 7,
-			"instructions" : 1
+			"instructions" : 0
 		},
 		{
 			"id" : 8,
-			"instructions" : 1
+			"instructions" : 0
 		}
 	],
 	"ls" : 
 	[
 		{
 			"id" : 0,
-			"instructions" : 1
+			"instructions" : 0
 		},
 		{
 			"id" : 1,
-			"instructions" : 1
+			"instructions" : 0
 		}
 	],
 	"multiplier" : 
@@ -73,6 +73,6 @@
 			"instructions" : 0
 		}
 	],
-	"reg reads" : 0,
+	"reg_reads" : 4,
 	"stalls" : 0
 }
