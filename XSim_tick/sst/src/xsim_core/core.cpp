@@ -247,6 +247,8 @@ bool Core::tick(Cycle_t cycle)
 	// executing instructions in functional units
 	execute();
 
+	ls_queue();
+
 	// reading operands
 	std::cout << "Read Operands" << std::endl;
 	uint16_t next_int_index = read_integer_operands();
@@ -284,7 +286,6 @@ bool Core::tick(Cycle_t cycle)
 		primaryComponentOKToEndSim();
 		return true;
 	}
-	ls_queue();
 
 	return false;
 }
@@ -318,15 +319,12 @@ void Core::issue()
 		}
 
 		get_i_fields(instruction, rd, imm8);
-		// These instructions don't wait for anyone!
 		target_res->op1_ready = true;
 		target_res->op1_tag = -1;
 
 		target_res->op2_ready = true;
 		target_res->op2_tag = -1;
 		
-		// Note: You'll likely store the immediate value itself 
-		// in a separate 'imm' field in your res_slot_t
 		target_res->immediate = imm8; 
 	} 
 	else {
@@ -430,9 +428,9 @@ void Core::cache_issue(uint16_t opcode, uint16_t rs, uint16_t rt, uint16_t rd, i
             ls_slot.op1_tag = operands[rs].tag;
             ls_slot.op1_type = operands[rs].type;
         }
-        ls_slot.op2_ready = true; // LW doesn't wait for op2
+        ls_slot.op2_ready = true; // lw doesn't wait for op2
     } else {
-        // SW Logic: Base Address (rs)
+        // sw logic - base address (rs)
         if (operands[rs].ready) {
             ls_slot.op1_ready = true;
             ls_slot.op1_tag = -1;
@@ -442,7 +440,7 @@ void Core::cache_issue(uint16_t opcode, uint16_t rs, uint16_t rt, uint16_t rd, i
             ls_slot.op1_tag = operands[rs].tag;
             ls_slot.op1_type = operands[rs].type;
         }
-        // SW Logic: Data to store (rt)
+        // sw logic: data to store (rt)
         if (operands[rt].ready) {
             ls_slot.op2_ready = true;
             ls_slot.op2_tag = -1;
@@ -601,13 +599,13 @@ void Core::release_rs_slot(int tag, std::string type)
 		integer_rs[tag].dispatched = false;
 	} else if (type == "divider") {
 		divider_rs[tag].taken = false;
-		integer_rs[tag].dispatched = false;
+		divider_rs[tag].dispatched = false;
 	} else if (type == "multiplier") {
 		multiplier_rs[tag].taken = false;
-		integer_rs[tag].dispatched = false;
+		multiplier_rs[tag].dispatched = false;
 	} else if (type == "ls") {
 		ls_rs[tag].taken = false;
-		integer_rs[tag].dispatched = false;
+		ls_rs[tag].dispatched = false;
 	}
 	std::cout << "DEBUG: RS " << type << " index " << tag << " IS NOW FREE." << std::endl;
 }
