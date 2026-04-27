@@ -62,6 +62,18 @@ core.addParams({
 iface = core.setSubComponent("memory", "memHierarchy.standardInterface")
 #iface.addParams({"debug" : 1, "debug_level" : 10})
 
+#L1 cache component: mem interface --> cache --> DRAM
+#cache freq, size, and associativity parsed from json config 
+cache = sst.Component("l1_cache", "memHierarchy.Cache")
+cache.addParams(
+  {
+    "cache_frequency": configuration["clock"], 
+    "cache_size": configuration["cache"]["size"],
+    "associativity": str(configuration["cache"]["associativity"]), #1,2,4,8
+    "access_latency_cycles": "1", #1 clock cycle
+    "cache_line_size": "16", #16 bytes
+    "L1": "true",
+})
 
 # Now we add the memory to the simulation
 # In this case we're using a simple memory controller (the memory frontend)
@@ -84,12 +96,17 @@ memory_timing.addParams({
 	"mem_size" : "64KiB"
 })
 
-# Now we need to connect the two components together, the link has a latency
-#	and can be assimetric (it's not in this case)
-cpu_data_memory_link = sst.Link("cpu_data_memory_link")
-cpu_data_memory_link.connect(
-	(iface,		"lowlink",	"500ps"),
-	(memory,	"highlink",	"500ps")
+#cpu interface -> cache -> cpu link (replacing interface ->cpu link) 
+cpu_cache_link = sst.Link("cpu_cache_link")
+cpu_cache_link.connect(
+    (iface,  "lowlink",  "500ps"),
+    (cache,  "highlink", "500ps")
+)
+
+cache_mem_link = sst.Link("cache_mem_link")
+cache_mem_link.connect(
+    (cache,  "lowlink",  "500ps"),
+    (memory, "highlink", "500ps")
 )
 
 # Enable statistics for all components

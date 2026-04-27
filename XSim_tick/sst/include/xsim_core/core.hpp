@@ -41,16 +41,23 @@ struct res_slot_t {
 	// station tag
 	int station_id{-1};
 	// operand 1
+	uint16_t op1;
 	bool op1_ready{false};
 	int op1_tag{-1};
 	std::string op1_type;
 	// operand 2
+	uint16_t op2;
 	bool op2_ready{false};
 	int op2_tag{-1};
 	std::string op2_type;
 	// destination register
 	uint32_t immediate{0};
 	uint16_t dest;
+	// for cache
+	bool load_op{false};
+	u_int32_t latency{0};
+	// operation in cache/memory
+	bool pending{false};
 };
 
 struct functional_unit {
@@ -245,6 +252,17 @@ class Core : public SST::Component
 		// Check if reservation stations are empty
 		bool rs_empty();
 		bool fus_idle();
+
+		/** LS Queue Trackers */
+		int ls_head{0};
+		int ls_tail{0};
+		// current # of entries in queue
+		int queue_entry_count{0};
+		// true if operation being sent to mem/DRAM - only allowed for one op in queue at a time 
+		bool ls_queue_pending{false};
+		// ls queue handler
+		void ls_queue();
+		void cache_issue(uint16_t opcode, uint16_t rs, uint16_t rt, uint16_t rd, int slot_index);
 
 		// Statistics definitions
 		Statistics<uint64_t> *instruction_count;
