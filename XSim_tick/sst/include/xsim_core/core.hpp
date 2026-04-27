@@ -23,32 +23,42 @@ namespace Core
 
 enum class functional_unit_type {INTEGER, MULTIPLIER, DIVIDER, LS};
 
-struct rename_table_slot {
-	// ready to be written to or not - false if in use by another
-	bool ready_for_write{true};
-	// which rs is writing to this reg; -1 if not being written to
-	int rs_write{-1};
-};
-
 struct operand {
 	// ready to be read from or not - true if has value & not being written to
 	bool ready{true};
-	// which reservation station is writing to this reg; -1 if not being written to
-	int rs_write{-1};
+	int tag{-1};
+	std::string type{"none"};
 };
 
-struct reservation_station_slot_t {
+struct res_slot_t {
 	// rs slot taken y/n
 	bool taken{false};
+	bool dispatched{false};
 	// curr instruction id from pc
 	int instruction_id{-1};
-	uint16_t op1;
-	uint16_t op2;
+	// type of reservation station
+	std::string type;
+	// station tag
+	int station_id{-1};
+	// operand 1
+	bool op1_ready{false};
+	int op1_tag{-1};
+	std::string op1_type;
+	// operand 2
+	bool op2_ready{false};
+	int op2_tag{-1};
+	std::string op2_type;
+	// destination register
+	uint32_t immediate{0};
+	uint16_t dest;
 };
 
 struct functional_unit {
 	bool busy{false};
-	uint32_t latency{0};
+	uint16_t cycles_remaining{0};
+	std::string type;
+	int tag{-1};
+	res_slot_t res;
 };
 
 class Core : public SST::Component
@@ -133,8 +143,6 @@ class Core : public SST::Component
 		int next_issue{0};
 		// completed instruction count - inc @ WR
 		int instruction_completes{0};
-		// cycle count
-		u_int64_t cycle_count{0};
 		// reg read count
 		u_int64_t reg_reads{0};
 		// stalls count
@@ -148,11 +156,10 @@ class Core : public SST::Component
 		std::map<uint32_t, uint32_t> ls_count;
 
 		// res stations by type - size parsed from config
-		std::array<rename_table_slot, 8> rename_table{};
-		std::vector<reservation_station_slot_t> integer_rs;
-		std::vector<reservation_station_slot_t> multiplier_rs;
-		std::vector<reservation_station_slot_t> divider_rs;
-		std::vector<reservation_station_slot_t> ls_rs; 
+		std::vector<res_slot_t> integer_rs;
+		std::vector<res_slot_t> multiplier_rs;
+		std::vector<res_slot_t> divider_rs;
+		std::vector<res_slot_t> ls_rs; 
 		// fu free tracking by type
 		std::vector<functional_unit> integer_fu_list;
 		std::vector<functional_unit> multiplier_fu_list;
@@ -160,11 +167,8 @@ class Core : public SST::Component
 		// add ls one?
 		std::vector<functional_unit> ls_fu_list; //may change later - queue
 
-		// functional unit holds
-		bool hold_integer;
-		bool hold_divider;
-		bool hold_multiplier;
-		bool hold_ls;
+		// halt issued flag
+		bool halt_issued{false};
 
 		// initialize config default fu count and res stations
 		int config_int_num{0}, config_int_resnum{0}, config_mult_num{0}, config_mult_resnum{0}, config_div_num{0}, config_div_resnum{0}, config_ls_num{0}, config_ls_resnum{0};		
@@ -172,6 +176,8 @@ class Core : public SST::Component
 		/** CPU state **/
 		// The program counter
 		uint32_t pc{0};
+		uint32_t stalled_count{0};
+		uint32_t cycle_count{0};
 		// Registers
 		std::array<uint16_t,8> registers;
 		std::array<operand, 8> operands;
@@ -179,7 +185,10 @@ class Core : public SST::Component
 		bool busy{false};
 		bool stalled{false};
 		// Busy processing instruction
-		int latency_countdown{0};
+		uint32_t int_lat;
+		uint32_t mult_lat;
+		uint32_t div_lat;
+		uint32_t ls_lat;
 		// Waiting for memory return
 		bool waiting_memory{false};
 		// Finished simulation
@@ -203,17 +212,39 @@ class Core : public SST::Component
 		// concatenate two 8-bit unsigned ints
 		uint16_t concat8bit(uint8_t high_bits, uint8_t low_bits);
 
+		void init_opcode_types();
+
 		/** Functions to process events **/
 		// Issuue a new instruction
 		void issue();
+		res_slot_t *find_free_rs(std::vector<res_slot_t> &rs_list, int &found_index);
 		// Read operand for instruction in reservation station
-		reservation_station_slot_t read_integer_operands();
-		reservation_station_slot_t read_divider_operands();
-		reservation_station_slot_t read_multiplier_operands();
-		// Fetch a new instruction
-		void fetch_instruction();
-		// Execute a new instruction
-		void execute_instruction();
+		uint16_t read_integer_operands();
+		uint16_t read_divider_operands();
+		uint16_t read_multiplier_operands();
+		uint16_t read_ls_operands();
+		// Assigns instruction from reservation station to functional unit
+		void assign_integer_fu(res_slot_t &res);
+		void assign_divider_fu(res_slot_t &res);
+		void assign_multiplier_fu(res_slot_t &res);
+		void assign_ls_fu(res_slot_t &res);
+		// Execute the instructions in functional units
+		void execute();
+		void execute_integer();
+		void execute_divider();
+		void execute_multiplier();
+		void execute_ls();
+		// Write results to the register
+		void write_registers();
+		void writeback_fu_registers(std::vector<functional_unit>& fu_list);
+		void cdb_broadcast(int fu_tag, std::string type);
+		void update_rs_operands(std::vector<res_slot_t> &rs_list, int tag, std::string type);
+		void release_rs_slot(int tag, std::string type);
+		// Update instruction execution count
+		void update_instruction_count(uint32_t inst_loc);
+		// Check if reservation stations are empty
+		bool rs_empty();
+		bool fus_idle();
 
 		// Statistics definitions
 		Statistics<uint64_t> *instruction_count;
